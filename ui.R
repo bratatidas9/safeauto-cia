@@ -31,6 +31,12 @@ shinyUI(fluidPage(
       br(),
       br(),
       
+      uiOutput("deviceBrandCheckboxGroup"),
+      actionButton("deviceBrandSelectAll",
+                   label = "Select/Deselect All Device Brands"),
+      br(),
+      br(),
+      
       uiOutput("resolutionCheckboxGroup"),
       actionButton("resolutionSelectAll",
                    label = "Select/Deselect All Resolution"),

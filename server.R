@@ -13,6 +13,7 @@ shinyServer(function(input, output, session) {
   mobileChoices <- sort(unique(as.character(newData$DeviceIsMobile)))
   browserChoices <- sort(unique(as.character(newData$Browser)))
   resolutionChoices <- unique(as.character(newData$Resolution))
+  deviceBrandChoices <- unique(as.character(newData$DeviceBrand))
   
   # reactive function to filter out data based on user input
   filterData <- reactive({
@@ -24,7 +25,8 @@ shinyServer(function(input, output, session) {
         filteredData <- newData[newData$State %in% input$state &
                                   newData$DeviceIsMobile %in% input$isMobile &
                                   newData$Browser %in% input$browser &
-                                  newData$Resolution %in% input$resolution, ]
+                                  newData$Resolution %in% input$resolution &
+                                  newData$DeviceBrand %in% input$deviceBrand, ]
         
         validate(
           need(length(input$state) > 0,
@@ -35,6 +37,8 @@ shinyServer(function(input, output, session) {
                "Please select more than one browsers"),
           need(length(input$resolution) > 0,
                "Please select more than one resolutions"),
+          need(length(input$deviceBrand) > 0,
+               "Please select more than one device brands"),
           need(nrow(filteredData) > 0,
                paste0("Not sufficient Data available. 
                   Please select other filter options."))
@@ -58,6 +62,13 @@ shinyServer(function(input, output, session) {
     checkboxGroupInput("isMobile", "Mobile Options:",
                                 choices  = mobileChoices,
                                 selected = mobileChoices)
+  })
+  
+  # get reactive device brand options
+  output$deviceBrandCheckboxGroup <- renderUI({
+    checkboxGroupInput("deviceBrand", "Device Brand:",
+                       choices  = deviceBrandChoices,
+                       selected = deviceBrandChoices)
   })
   
   # get reactive browser choices
@@ -87,6 +98,24 @@ shinyServer(function(input, output, session) {
         updateCheckboxGroupInput(session = session,
                                  inputId = "state",
                                  choices = stateChoices,
+                                 selected = c())
+      }
+    }
+  })
+  
+  # observer function for device brands
+  obsDeviceBrand <- observe({
+    if(input$deviceBrandSelectAll > 0) {
+      if(input$deviceBrandSelectAll %% 2 == 0) {
+        updateCheckboxGroupInput(session = session,
+                                 inputId = "deviceBrand",
+                                 choices = deviceBrandChoices,
+                                 selected = deviceBrandChoices)
+        
+      } else {
+        updateCheckboxGroupInput(session = session,
+                                 inputId = "deviceBrand",
+                                 choices = deviceBrandChoices,
                                  selected = c())
       }
     }
@@ -334,5 +363,6 @@ shinyServer(function(input, output, session) {
     obsMobile$suspend()
     obsBrowser$suspend()
     obsResolution$suspend()
+    obsDeviceBrand$suspend()
   })
 })

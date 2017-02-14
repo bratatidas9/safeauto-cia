@@ -43,6 +43,8 @@ data$DeviceBrand[data$DeviceBrand == "iPhone" |
                    data$DeviceBrand == "iPad" | 
                    data$DeviceBrand == "IPod" |
                    data$DeviceBrand == "iPod touch"] <- "IPhone"
+data$DeviceBrand[data$DeviceBrand == "Windows Phone 10.0"] <- "Windows Phone"
+data$DeviceBrand[data$DeviceBrand == "BB10"] <- "Blackberry"
 
 # bucketing the resolutions into the following categories:
 # Greater Than 1920 x 1080

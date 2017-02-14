@@ -1,6 +1,8 @@
 library(shiny)
 library(DT)
 library(plotly)
+library(htmltools)
+library(htmlwidgets)
 library(sunburstR)
 
 shinyUI(fluidPage(   
@@ -58,25 +60,34 @@ shinyUI(fluidPage(
                htmlOutput("sankeyDiagram"),
                br(),
               
-               sunburstOutput("sunburstPlot", 
-                              height = "400px",
-                              width = "100%"),
+            
+               
+               sunburstOutput("sunburstPlot"),
                tags$head(tags$script(HTML("
                          $(document).ready(function(e) {
                             $('.sunburst-sidebar').remove();
                          })
-                         ")))
+                         ")))#,
+               #sunburst_html(id = "sunburstPlot")
+               # tags$div(class = "sunburst-sequence", id = "sunburstPlot", 
+               #          style = "chartArea: {height: 350;
+               #          width: '100%';}")
+                  
+               # tags$div(style="float:left; chartArea:{left:10,
+               #      right:10, 
+               #      bottom:20,  
+               #      top:20,,width:\"100%\",height:\"350\"} ",sunburst(sequencesCount))
               ),
       tabPanel("Time Dependency",
                br(),
                plotlyOutput("bubbleChartDate"),
                br(),
                plotlyOutput("bubbleChartDayOfWeek")
-      ),
-      tabPanel("Predictive Analysis",
-               br(),
-               dataTableOutput("predictionTable")
-               )
+      )#,
+      # tabPanel("Predictive Analysis",
+      #          br(),
+      #          dataTableOutput("predictionTable")
+      #          )
             )
         )
     )

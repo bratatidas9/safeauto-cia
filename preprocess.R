@@ -1,7 +1,7 @@
 library(data.table)
 
 # read data from csv file
-data <- data.frame(fread("safeAuto_data_challenge.csv",
+data <- data.frame(read.csv("safeAuto_data_challenge.csv",
                          header = TRUE, stringsAsFactors = FALSE,
                          na.strings = ""))
 
@@ -89,8 +89,8 @@ data$Resolution <- factor(data$Resolution,
                                            "> 1920 x 1080"))
 
 # convert true/false values of DeviceIsMobile Attribute
-data$DeviceIsMobile[data$DeviceIsMobile == "TRUE"] <- "Mobile"
-data$DeviceIsMobile[data$DeviceIsMobile == "FALSE"] <- "Non-Mobile"
+data$DeviceIsMobile[data$DeviceIsMobile == "True"] <- "Mobile"
+data$DeviceIsMobile[data$DeviceIsMobile == "False"] <- "Non-Mobile"
 data$DeviceIsMobile <- factor(data$DeviceIsMobile,
                               levels = c("Mobile", "Non-Mobile"))
 

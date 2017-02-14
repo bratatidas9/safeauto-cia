@@ -4,6 +4,8 @@ library(plotly)
 library(googleVis)
 library(sunburstR)
 
+source("./preprocess.R")
+
 shinyServer(function(input, output, session) {
   
   # choices for filters

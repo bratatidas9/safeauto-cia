@@ -1,7 +1,7 @@
 library(shiny)
 library(DT)
 library(plotly)
-require(googleVis)
+library(googleVis)
 library(sunburstR)
 
 shinyServer(function(input, output, session) {
@@ -9,6 +9,8 @@ shinyServer(function(input, output, session) {
   # choices for filters
   stateChoices <- sort(unique(as.character(newData$State)))
   mobileChoices <- sort(unique(as.character(newData$DeviceIsMobile)))
+  browserChoices <- sort(unique(as.character(newData$Browser)))
+  resolutionChoices <- unique(as.character(newData$Resolution))
   
   # reactive function to filter out data based on user input
   filterData <- reactive({
@@ -18,28 +20,25 @@ shinyServer(function(input, output, session) {
         filteredData <- newData
       } else {
         filteredData <- newData[newData$State %in% input$state &
-                                  newData$DeviceIsMobile %in% input$isMobile, ]
+                                  newData$DeviceIsMobile %in% input$isMobile &
+                                  newData$Browser %in% input$browser &
+                                  newData$Resolution %in% input$resolution, ]
+        
         validate(
           need(length(input$state) > 0,
                "Please select more than one state"),
           need(length(input$isMobile) > 0,
                "Please select more than one mobile options"),
+          need(length(input$browser) > 0,
+               "Please select more than one browsers"),
+          need(length(input$resolution) > 0,
+               "Please select more than one resolutions"),
           need(nrow(filteredData) > 0,
                paste0("Not sufficient Data available. 
                   Please select other filter options."))
         )
       }
     })
-    
-    if(input$browserDropDownInput != "All") {
-      filteredData <- filteredData[filteredData$Browser == 
-                                     input$browserDropDownInput, ]
-    }
-    if(input$resolutionDropDownInput != "All") {
-      filteredData <- filteredData[filteredData$Resolution 
-                                   == input$resolutionDropDownInput, ]
-    }
-    
     return(filteredData)
   })
   
@@ -57,6 +56,20 @@ shinyServer(function(input, output, session) {
     checkboxGroupInput("isMobile", "Mobile Options:",
                                 choices  = mobileChoices,
                                 selected = mobileChoices)
+  })
+  
+  # get reactive browser choices
+  output$browserCheckboxGroup <- renderUI({
+    checkboxGroupInput("browser", "Browser:",
+                       choices  = browserChoices,
+                       selected = browserChoices)
+  })
+  
+  # get reactive resolution choices
+  output$resolutionCheckboxGroup <- renderUI({
+    checkboxGroupInput("resolution", "Resolution:",
+                       choices  = resolutionChoices,
+                       selected = resolutionChoices)
   })
   
   # observer function for states
@@ -95,20 +108,40 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  # drop down list for Browser choices
-  output$browserDropDown <- renderUI({
-    browserDropDownChoices <- append(sort(unique(newData$Browser)), "All")
-    selectInput("browserDropDownInput", "Browser:",
-                  choices = browserDropDownChoices,
-                  selected = "All")
+  # observer functions for browser choices
+  obsBrowser <- observe({
+    if(input$browserSelectAll > 0) {
+      if(input$browserSelectAll %% 2 == 0) {
+        updateCheckboxGroupInput(session = session,
+                                 inputId = "browser",
+                                 choices = browserChoices,
+                                 selected = browserChoices)
+        
+      } else {
+        updateCheckboxGroupInput(session = session,
+                                 inputId = "browser",
+                                 choices = browserChoices,
+                                 selected = c())
+      }
+    }
   })
   
-  # drop down list for resolution choices
-  output$resolutionDropDown <- renderUI({
-    resolutionDropDownChoices <- append(unique(newData$Resolution), "All")
-    selectInput("resolutionDropDownInput", "Resolution:",
-                choices = resolutionDropDownChoices,
-                selected = "All")
+  # observer functions for resolution choices
+  obsResolution <- observe({
+    if(input$resolutionSelectAll > 0) {
+      if(input$resolutionSelectAll %% 2 == 0) {
+        updateCheckboxGroupInput(session = session,
+                                 inputId = "resolution",
+                                 choices = resolutionChoices,
+                                 selected = resolutionChoices)
+        
+      } else {
+        updateCheckboxGroupInput(session = session,
+                                 inputId = "resolution",
+                                 choices = resolutionChoices,
+                                 selected = c())
+      }
+    }
   })
   
   # output$predictionTable <- renderDataTable({
@@ -123,10 +156,10 @@ shinyServer(function(input, output, session) {
   
   output$bubbleChartDayOfWeek <- renderPlotly({
     # get filtered data
-    newData <- filterData()
+    filteredData <- filterData()
     
     # get only those columns which are required
-    summaryData <- newData[, c("UserId", "Duration",
+    summaryData <- filteredData[, c("UserId", "Duration",
                                "TimeOfDay", "DayOfWeek", "PaymentComplete")]
 
     # set levels for days of the week
@@ -155,7 +188,9 @@ shinyServer(function(input, output, session) {
                  sizes = c(as.numeric(min(summaryData$Duration)),
                            as.numeric(max(summaryData$Duration))),
                  marker = list(size = ~Duration/100,
-                               opacity = opacity)) %>%
+                               opacity = opacity),
+                 hoverinfo = 'text',
+                 text = ~paste(Duration, 'minutes')) %>%
       layout(title = 'Day of Week vs Time of Day vs Duration (in minutes)',
              xaxis = list(showgrid = FALSE,
                           title = "Day Of Week"),
@@ -166,10 +201,10 @@ shinyServer(function(input, output, session) {
   
   output$bubbleChartDate <- renderPlotly({
     # get filtered data
-    newData <- filterData()
+    filteredData <- filterData()
 
     # get only those columns which are required
-    summaryData <- newData[, c("UserId", "Date", "Duration",
+    summaryData <- filteredData[, c("UserId", "Date", "Duration",
                                "TimeOfDay", "PaymentComplete")]
     
     # make the opacity as 1 if policy is sold
@@ -188,7 +223,9 @@ shinyServer(function(input, output, session) {
                  sizes = c(as.numeric(min(summaryData$Duration)),
                                     as.numeric(max(summaryData$Duration))),
                  marker = list(size = ~Duration/100,
-                               opacity = opacity)) %>%
+                               opacity = opacity),
+                 hoverinfo = 'text',
+                 text = ~paste(Duration, 'minutes')) %>%
       layout(title = 'Date vs Time of Day vs Duration (in minutes)',
              xaxis = list(showgrid = FALSE,
                           range = c(as.numeric(as.POSIXct(
@@ -205,7 +242,7 @@ shinyServer(function(input, output, session) {
   
   output$sankeyDiagram <- renderGvis({
     # get filtered data
-    newData <- filterData()
+    filteredData <- filterData()
     
     # make a new data frame with values for number of sessions, when a user
     # passes from one event to another
@@ -239,31 +276,43 @@ shinyServer(function(input, output, session) {
                              "Dropped After Retrieve Premium",
                              "Dropped After Bind Start",
                              "Dropped After Payment Start"),
-                      Sessions = c(nrow(newData[newData$PreQuotePortal == 1, ]),
-                                 nrow(subset(newData, 
-                                             newData$PreQuotePortal == 0 & 
-                                               newData$QuoteStart == 1)),
-                                 nrow(newData[newData$QuoteStart == 1, ]),
-                                 nrow(subset(newData,
-                                             newData$QuoteStart == 0 &
-                                               newData$RetrievePremium == 1)),
-                                 nrow(newData[newData$RetrievePremium == 1, ]),
-                                 nrow(subset(newData,
-                                             newData$RetrievePremium == 0 &
-                                               newData$BindStart == 1)),
-                                 nrow(newData[newData$BindStart == 1, ]),
-                                 nrow(subset(newData,
-                                             newData$BindStart == 0 &
-                                               newData$PaymentStart == 1)),
-                                 nrow(newData[newData$PaymentStart == 1, ]),
-                                 nrow(subset(newData,
-                                             newData$PaymentStart == 0 &
-                                               newData$PaymentComplete == 1)),
-                                 nrow(newData[newData$PreQuotePortal == 0, ]),
-                                 nrow(newData[newData$QuoteStart == 0, ]),
-                                 nrow(newData[newData$RetrievePremium == 0, ]),
-                                 nrow(newData[newData$BindStart == 0, ]),
-                                 nrow(newData[newData$PaymentStart == 0, ])
+                      Sessions = c(nrow(filteredData[filteredData$PreQuotePortal
+                                                     == 1, ]),
+                                 nrow(subset(filteredData, 
+                                             filteredData$PreQuotePortal == 0 & 
+                                               filteredData$QuoteStart == 1)),
+                                 nrow(filteredData[filteredData$QuoteStart
+                                                   == 1, ]),
+                                 nrow(subset(filteredData,
+                                             filteredData$QuoteStart == 0 &
+                                               filteredData$RetrievePremium 
+                                             == 1)),
+                                 nrow(filteredData[filteredData$RetrievePremium 
+                                                   == 1, ]),
+                                 nrow(subset(filteredData,
+                                             filteredData$RetrievePremium == 0 &
+                                               filteredData$BindStart == 1)),
+                                 nrow(filteredData[filteredData$BindStart 
+                                                   == 1, ]),
+                                 nrow(subset(filteredData,
+                                             filteredData$BindStart == 0 &
+                                               filteredData$PaymentStart == 1)),
+                                 nrow(filteredData[filteredData$PaymentStart == 
+                                                     1, ]),
+                                 nrow(subset(filteredData,
+                                             filteredData$PaymentStart == 0 &
+                                               filteredData$PaymentComplete == 
+                                               1)),
+                                 nrow(filteredData[filteredData$PreQuotePortal 
+                                                   == 0, ]),
+                                 nrow(filteredData[filteredData$QuoteStart 
+                                                   == 0, ]),
+                                 nrow(filteredData[filteredData$RetrievePremium
+                                                   == 0, ]),
+                                 nrow(filteredData[filteredData$BindStart 
+                                                   == 0, ]),
+                                 nrow(filteredData[filteredData$PaymentStart 
+                                                   == 0, ])
                                 ))
     
     # plot the sankey diagram
@@ -274,61 +323,14 @@ shinyServer(function(input, output, session) {
   })
   
   output$sunburstPlot <- renderSunburst({
-    # # make a copy for sunburst diagram
-    # sequences <- data[, c("Event", "UserId", "InteractionId", "State")]
-    # 
-    # # keep only those events which are interesting
-    # keep <- c("Pre-Quote Portal", "Retrieve Existing Policy",
-    #           "Quote Start", "Retrieve Premium", "Bind Start",
-    #           "Add Drivers", "Add Vehicles", "Payment Start",
-    #           "Payment Complete", "Download Receipt", "Referred to Phone Rep",
-    #           "Choose Coverage", "Get Premium")
-    # 
-    # sequences <- sequences[sequences$Event %in% keep, ]
-    # 
-    # # make one row per user and interaction
-    # sequences <- setDT(sequences)[, lapply(.SD, 
-    #                                        function(x) toString(na.omit(x))),
-    #                               by = list(UserId, State, InteractionId)]
-    # 
-    # sequences$Event <- gsub("Pre-Quote Portal", "PreQuotePortal", 
-    #                         sequences$Event)
-    # sequences$Event <- gsub("Retrieve Existing Policy", 
-    #                         "RetrieveExistingPolicy",
-    #                         sequences$Event)
-    # sequences$Event <- gsub("Quote Start", "QuoteStart", sequences$Event)
-    # sequences$Event <- gsub("Retrieve Premium", "RetrievePremium",
-    #                         sequences$Event)
-    # sequences$Event <- gsub("Bind Start", "BindStart", sequences$Event)
-    # sequences$Event <- gsub("Add Drivers", "AddDrivers", sequences$Event)
-    # sequences$Event <- gsub("Add Vehicles", "AddVehicles", sequences$Event)
-    # sequences$Event <- gsub("Payment Start", "PaymentStart", sequences$Event)
-    # sequences$Event <- gsub("Payment Complete", "PaymentComplete", 
-    #                         sequences$Event)
-    # sequences$Event <- gsub("Download Receipt", "DownloadReceipt", 
-    #                         sequences$Event)
-    # sequences$Event <- gsub("Referred to Phone Rep", "ReferredToPhoneRep",
-    #                         sequences$Event)
-    # sequences$Event <- gsub("Choose Coverage", "ChooseCoverage", 
-    #                         sequences$Event)
-    # sequences$Event <- gsub("Get Premium", "GetPremium", sequences$Event)
-    # sequences$Event <- gsub(', ', '-', sequences$Event)
-    # 
-    # # remove columns which are no longer necessary
-    # sequences$UserId <- NULL
-    # sequences$State <- NULL
-    # sequences$InteractionId <- NULL
-    # 
-    # # aggregate for sunburst diagram
-    # sequences <- aggregate(sequences$Event,
-    #                        by = list(Event = sequences$Event),
-    #                        FUN = "length")
-    # return(sunburst(sequences))
+    return(sunburst(sequencesCount))
   })
   
   # suspend the observer functions when session is ended
   session$onSessionEnded(function() {
     obsStates$suspend()
     obsMobile$suspend()
+    obsBrowser$suspend()
+    obsResolution$suspend()
   })
 })

@@ -111,7 +111,12 @@ newData$Duration <- sapply(newData$Date, function(x) {
   x <- as.POSIXct(strptime(unlist(strsplit(x, split = ", ")), 
                            format = "%Y-%m-%d %H:%M:%S"))
   x <- difftime(x[length(x)], x[1], units = "mins")
+  
 })
+
+# limit duration to two decimal places
+is.num <- sapply(newData$Duration, is.numeric)
+newData$Duration[is.num] <- sapply(newData$Duration[is.num], round, 2)
 
 # calculate time of day for each interaction
 newData$TimeOfDay <- sapply(newData$Date, function(x) {
@@ -185,3 +190,57 @@ newData$PaymentComplete <- sapply(newData$Event, function(x) {
 
 # remove event column since it is no longer required
 newData$Event <- NULL
+
+# make a copy for sunburst diagram
+sequences <- data[, c("Event", "UserId", "InteractionId", "State")]
+
+# keep only those events which are interesting
+keep <- c("Pre-Quote Portal", "Retrieve Existing Policy",
+          "Quote Start", "Retrieve Premium", "Bind Start",
+          "Add Drivers", "Add Vehicles", "Payment Start",
+          "Payment Complete", "Download Receipt", "Referred to Phone Rep",
+          "Choose Coverage", "Get Premium")
+
+sequences <- sequences[sequences$Event %in% keep, ]
+
+# make one row per user and interaction
+sequences <- setDT(sequences)[, lapply(.SD,
+                                       function(x) toString(na.omit(x))),
+                              by = list(UserId, State, InteractionId)]
+
+sequences$Event <- gsub("Pre-Quote Portal", "prequoteportal",
+                        sequences$Event)
+sequences$Event <- gsub("Retrieve Existing Policy",
+                        "retrieveexistingpolicy",
+                        sequences$Event)
+sequences$Event <- gsub("Quote Start", "quotestart", sequences$Event)
+sequences$Event <- gsub("Retrieve Premium", "retrievepremium",
+                        sequences$Event)
+sequences$Event <- gsub("Bind Start", "bindstart", sequences$Event)
+sequences$Event <- gsub("Add Drivers", "adddrivers", sequences$Event)
+sequences$Event <- gsub("Add Vehicles", "addvehicles", sequences$Event)
+sequences$Event <- gsub("Payment Start", "paymentstart", sequences$Event)
+sequences$Event <- gsub("Payment Complete", "paymentcomplete",
+                        sequences$Event)
+sequences$Event <- gsub("Download Receipt", "downloadreceipt",
+                        sequences$Event)
+sequences$Event <- gsub("Referred to Phone Rep", "referredtophoneRep",
+                        sequences$Event)
+sequences$Event <- gsub("Choose Coverage", "choosecoverage",
+                        sequences$Event)
+sequences$Event <- gsub("Get Premium", "getpremium", sequences$Event)
+
+
+# remove columns which are no longer necessary
+sequences$UserId <- NULL
+sequences$State <- NULL
+sequences$InteractionId <- NULL
+
+# aggregate for sunburst diagram
+sequencesCount <- aggregate(sequences$Event,
+                            by = list(Event = sequences$Event),
+                            FUN = "length")
+
+# change format to correct rendering of sunburst
+sequencesCount$Event <- gsub(', ', '-', sequencesCount$Event)
+sequencesCount$Event <- paste(sequencesCount$Event, "-end", sep = "")

@@ -18,13 +18,25 @@ shinyUI(fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      uiOutput("browserDropDown"),
-      uiOutput("resolutionDropDown"),
+     
       uiOutput("mobileCheckboxGroup"),
       actionButton("mobileSelectAll",
                    label = "Select/Deselect All Mobile Options"),
       br(),
       br(),
+      
+      uiOutput("browserCheckboxGroup"),
+      actionButton("browserSelectAll",
+                   label = "Select/Deselect All Browsers"),
+      br(),
+      br(),
+      
+      uiOutput("resolutionCheckboxGroup"),
+      actionButton("resolutionSelectAll",
+                   label = "Select/Deselect All Resolution"),
+      br(),
+      br(),
+      
       uiOutput("stateCheckboxGroup"),
       actionButton("stateSelectAll",
                    label = "Select/Deselect All States"),
@@ -39,7 +51,15 @@ shinyUI(fluidPage(
                br(),
                htmlOutput("sankeyDiagram"),
                br(),
-               sunburstOutput("sunburstPlot")
+              
+               sunburstOutput("sunburstPlot", 
+                              height = "400px",
+                              width = "100%"),
+               tags$head(tags$script(HTML("
+                         $(document).ready(function(e) {
+                            $('.sunburst-sidebar').remove();
+                         })
+                         ")))
               ),
       tabPanel("Time Dependency",
                br(),

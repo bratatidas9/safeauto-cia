@@ -81,11 +81,11 @@ shinyUI(fluidPage(
                plotlyOutput("bubbleChartDate"),
                br(),
                plotlyOutput("bubbleChartDayOfWeek")
-      )#,
-      # tabPanel("Predictive Analysis",
-      #          br(),
-      #          dataTableOutput("predictionTable")
-      #          )
+      ),
+      tabPanel("Predictive Analysis",
+               br(),
+               dataTableOutput("predictionTable")
+               )
             )
         )
     )

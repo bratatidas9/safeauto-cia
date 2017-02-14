@@ -5,6 +5,7 @@ library(googleVis)
 library(sunburstR)
 
 source("./preprocess.R")
+source("./randomForest.R")
 
 shinyServer(function(input, output, session) {
   
@@ -40,8 +41,7 @@ shinyServer(function(input, output, session) {
           need(length(input$deviceBrand) > 0,
                "Please select more than one device brands"),
           need(nrow(filteredData) > 0,
-               paste0("Not sufficient Data available. 
-                  Please select other filter options."))
+               paste0("Not sufficient Data available."))
         )
       }
     })
@@ -175,15 +175,70 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  # output$predictionTable <- renderDataTable({
-  #   final.test$UserAgentString <- NULL
-  #   datatable(final.test,
-  #             options = list(searching = FALSE,
-  #                            paging = FALSE,
-  #                            info = FALSE,
-  #                            ordering = FALSE),
-  #             rownames = FALSE) %>% formatPercentage(ncol(final.test), 2)
-  # })
+  output$predictionTable <- renderDataTable({
+    
+    # removing columns which are not to be displayed
+    final.test$UserAgentString <- NULL
+    final.test$PreQuotePortal <- NULL
+    final.test$QuoteStart <- NULL
+    final.test$RetrievePremium <- NULL
+    final.test$BindStart <- NULL
+    final.test$AddDrivers <- NULL
+    final.test$AddVehicles <- NULL
+    final.test$ChooseCoverage <- NULL
+    final.test$GetPremium <- NULL
+    final.test$PaymentStart <- NULL
+    final.test$PaymentComplete <- NULL
+    final.test$BrowserVersion <- NULL
+    final.test$EventType <- NULL
+    colnames(final.test) <- c("State", 
+                              "Browser",
+                              "Mobile Device",
+                              "Device Brand",
+                              "Resolution",
+                              "Duration (in minutes)",
+                              "Time of Day (24-hr)",
+                              "Day of Week",
+                              "Prediction")
+    
+    input$go
+    
+    isolate({
+      if(input$go < 1) {
+        filteredData <- final.test
+      } else {
+        filteredData <- final.test[final.test$State %in% input$state &
+                                     final.test$`Mobile Device` %in% 
+                                     input$isMobile &
+                                     final.test$Browser %in% input$browser &
+                                     final.test$Resolution %in% 
+                                     input$resolution &
+                                     final.test$`Device Brand` %in% 
+                                     input$deviceBrand, ]
+        
+        validate(
+          need(length(input$state) > 0,
+               "Please select more than one state"),
+          need(length(input$isMobile) > 0,
+               "Please select more than one mobile options"),
+          need(length(input$browser) > 0,
+               "Please select more than one browsers"),
+          need(length(input$resolution) > 0,
+               "Please select more than one resolutions"),
+          need(length(input$deviceBrand) > 0,
+               "Please select more than one device brands"),
+          need(nrow(filteredData) > 0,
+               paste0("Not sufficient Data available."))
+        )
+      }
+    })
+    datatable(filteredData,
+              options = list(searching = FALSE,
+                             paging = TRUE,
+                             info = FALSE,
+                             ordering = TRUE),
+              rownames = FALSE) %>% formatPercentage(ncol(final.test), 2)
+  })
   
   output$bubbleChartDayOfWeek <- renderPlotly({
     # get filtered data

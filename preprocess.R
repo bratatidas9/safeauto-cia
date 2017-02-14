@@ -194,6 +194,7 @@ newData$PaymentComplete <- sapply(newData$Event, function(x) {
 newData$Event <- NULL
 
 # make a copy for sunburst diagram
+data <- as.data.frame(data)
 sequences <- data[, c("Event", "UserId", "InteractionId", "State")]
 
 # keep only those events which are interesting

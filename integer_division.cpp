@@ -6,14 +6,13 @@
 
 using namespace std;
 
-int quotient;
-
 /* function to perform division operation if neither 
 numerator nor denominator is not zero */
 void perform_division(int dividend, int divisor)
 {
 	int num = dividend;
 	int den = divisor;
+	
 	int sign = 1;
 	if(dividend < 0)
 	{
@@ -34,10 +33,15 @@ void perform_division(int dividend, int divisor)
 		remainder = remainder - divisor;
 	}
 
-	if(sign <  0)
-	{
-		quotient = (quotient+1)*-1;
-		remainder = num - (quotient*den);
+	if (sign < 0) {
+		int q = (quotient + 1) * -1;
+		int r = num - (q * den);
+		if(abs(remainder) < abs(den)) {
+			quotient = -quotient;
+		} else {
+			quotient = q;
+			remainder = r;
+		}
 	}
 
 	if(num < 0 && den < 0)

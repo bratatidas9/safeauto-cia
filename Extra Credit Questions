@@ -1,0 +1,31 @@
+Extra Credit Questions
+
+Question 1 (Part 1)
+
+	SELECT COUNT(event) as “NumberOfEvents”, EXTRACT(month FROM event) as “Month”
+	FROM events
+	WHERE city='Seattle'
+	GROUP BY EXTRACT(month FROM event);
+
+Question 1 (Part 2)
+	
+	SELECT t1.Month
+	FROM (SELECT MAX(t.NumberOfEvents), t.Month
+       		FROM (SELECT COUNT(event) as NumberOfEvents,
+           			EXTRACT(month FROM event) as Month
+            		FROM events
+            		WHERE city='Seattle'
+            		GROUP BY EXTRACT(month FROM event)
+            		) as t
+     	) as t1;
+
+Question 2
+
+1. The calculation of median is incorrect. The vector of data should be sorted and then the median should be the middle most value in case of an odd-length vector or the average of the two middle values in case of even-length vector.
+2. Variance should be calculated as :
+	variance += (values[i] ‐ median)** 2 / len(values)
+3. Also, standard deviation is the square root of variance but the script calculates the standard deviation as the square of the variance. 
+
+Question 3
+
+Integer Division - solution in integer_division.cpp

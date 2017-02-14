@@ -59,25 +59,23 @@ shinyUI(fluidPage(
                br(),
                htmlOutput("sankeyDiagram"),
                br(),
-              
-            
-               
+               br(),
                sunburstOutput("sunburstPlot"),
                tags$head(tags$script(HTML("
                          $(document).ready(function(e) {
                             $('.sunburst-sidebar').remove();
                          })
-                         ")))#,
-               #sunburst_html(id = "sunburstPlot")
-               # tags$div(class = "sunburst-sequence", id = "sunburstPlot", 
-               #          style = "chartArea: {height: 350;
-               #          width: '100%';}")
-                  
-               # tags$div(style="float:left; chartArea:{left:10,
-               #      right:10, 
-               #      bottom:20,  
-               #      top:20,,width:\"100%\",height:\"350\"} ",sunburst(sequencesCount))
-              ),
+                         "))),
+               tags$head(
+                 tags$style(
+                   HTML("
+                     .sunburst, svg {
+                        height: 850px !Important;
+                     }
+                   ")
+                 )
+               )
+               ),
       tabPanel("Time Dependency",
                br(),
                plotlyOutput("bubbleChartDate"),

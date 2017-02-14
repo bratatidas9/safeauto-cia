@@ -17,5 +17,4 @@ install_github("timelyportfolio/sunburstR")
 
 # How to run
 1. Make sure safeAuto_data_challenge.csv is placed in the same directory as ui.R and server.R files.
-2. source("./preprocess.R")
-3. runApp()
+2. runApp()
